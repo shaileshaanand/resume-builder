@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:alpine
+    volumes:
+      - ./tmp/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=resume_builder
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=changeme
+  app:
+    build: .
+    command: bash -c "rm -f tmp/pids/server.pid; ln -s /node_modules /app/node_modules; bundle exec rails db:migrate && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    volumes:
+      - .:/app
+      - /tmp/resume-builder/tmp:/app/tmp
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=resume_builder
+      - DB_USER=postgres
+      - DB_PASS=changeme
+    depends_on:
+      - db
+  
+  webpack:
+    build: .
+    command: bash -c "ln -s /node_modules /app/node_modules; bin/webpack-dev-server"
